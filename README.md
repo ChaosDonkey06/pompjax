@@ -24,7 +24,7 @@ The function $\mathcal{F}$ is the Iterated Filtering (cite1, cite2) that also ha
 
 ## The Ensemble Adjustment Kalman Filter (EAKF)
 
-The EAKF proceeds as following: given a current observation $y_t$ at time $t$ we assume is normally distributed with prescribed variance – observational error variance $c_t\sim \mathcal{N}(y_t,oev)$, then we can compute the simulated colonization across the ensemble members at the given time denoted $\mathbf{y}_t$, $\mathbf{y}_t=[y_t^1, y_t^2,y_t^3,…,y_t^{300}  ]$ normally distributed with computed mean and variance (the priors) $y_t^i\sim \mathcal{N}(\mu_{prior}, \sigma_{prior}^2)$. Then by convolution of two normal distribution the posterior distribution can be parametrized with posterior mean and variance given by the equation shown below.
+The EAKF proceeds as following: given a current observation $y_t$ at time $t$ we assume is normally distributed with prescribed variance – observational error variance $c_t\sim \mathcal{N}(y_t,oev)$, then we can compute the simulated observations across the ensemble members at the given time denoted $\mathbf{y}_t$, $\mathbf{y}_t=[y_t^1, y_t^2,y_t^3,…,y_t^{300}  ]$ normally distributed with computed mean and variance (the priors) $y_t^i\sim \mathcal{N}(\mu_{prior}, \sigma_{prior}^2)$. Then by convolution of two normal distribution the posterior distribution can be parametrized with posterior mean and variance given by the equation shown below.
 
 $$\sigma^2_{post}= \sigma^2_{prior}\frac{oev}{\sigma^2_{prior}+oev}$$
 $$\mu_{post}= \sigma^2_{post}\left(\frac{\mu_{prior}}{\sigma^2_{prior}} + \frac{c_t}{oev}\right)$$
@@ -36,7 +36,7 @@ $$\mathbf{dy}_t=(\mu_{post}-\mathbf{y}_t)+\sqrt{\frac{oev}{oev+\sigma^2_{prior}}
 The EAKF uses the covariance between the parameters and the observations to compute the Kalman gain of the parameters $d\theta$ of each ensemble member for each set of parameters$\theta=[\theta_1,\theta_2,…,\theta_{300}]$, note that here $\theta_i$ is the tuple of ensemble members $\theta_i=[\gamma, \beta]$ as described in previous section.
 
 $$\mathbf{d\theta}=\frac{cov(\mathbf{\theta}, \mathbf{y}_t)}{\sigma^2_{prior}}\times \mathbf{dy}$$
-The posterior of the number of colonization $\mathbf{y}_{post}$ and of the parameters $\theta_{post}$ is then given by
+The posterior observations $\mathbf{y}_{post}$ and of the parameters $\theta_{post}$ is then given by
 
 
 $$\mathbf{y_t}^{post}= \mathbf{y_t}+\mathbf{dy}$$
