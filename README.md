@@ -41,3 +41,6 @@ The posterior of the number of colonization $\mathbf{y}_{post}$ and of the param
 
 $$\mathbf{y_t}^{post}= \mathbf{y_t}+\mathbf{dy}$$
 $$\bm{\theta}_{post}=\bm{\theta} + \bm{d\theta}$$
+
+## The Iterated Filtering
+The iterated filtering (IF) uses multiple rounds of the EAKF through the observed time series to produce a maximum likelihood point estimate of the parameter space $\theta_{\text{MLE}}$ and shrinks the prior range of the parameter space so that it starts the EAKF assimilation closer to the past point estimate. We implement the second version of the iterated filtering (IF2) which additionally adds a prescribed perturbation to the parameter space that I assumed to be normally distributed (the authors allow this to be any density but 🤷‍♂️) with mean 0 and diagonal covariance matrix $H=diag([\sigma_{\theta_1}^2, \sigma_{\theta_2}^2, ..., \sigma_{\theta_p}^2])$. Here $\sigma_{\theta_i}$ is the variances of the noise for the parameter $i$.
