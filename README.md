@@ -33,7 +33,7 @@ Then the Kalman gain $dy$ of each ensemble member $\mathbf{y}_t$ is given by
 
 $$\mathbf{dy}_t=(\mu_{post}-\mathbf{y}_t)+\sqrt{\frac{oev}{oev+\sigma^2_{prior}}}(\mathbf{y}_t-\mu_{prior})$$
 
-The EAKF uses the covariance between the parameters and the observations to compute the Kalman gain of the parameters $d\theta$ of each ensemble member for each set of parameters$\theta=[\theta_1,\theta_2,…,\theta_{300}]$, note that here $\theta_i$ is the tuple of ensemble members $\theta_i=[\gamma, \beta]$ as described in previous section.
+The EAKF uses the covariance between the parameters and the observations to compute the Kalman gain of the parameters $d\theta$ of each ensemble member for each set of parameters$\theta=[\theta_1,\theta_2,…,\theta_{m}]$, note that here $\theta_i$ is the tuple of ensemble members with a parameter in each entry $\theta_i=[\, \beta]$ as described in previous section. (probably need to change stuff here to superscript).
 
 $$\mathbf{d\theta}=\frac{cov(\mathbf{\theta}, \mathbf{y}_t)}{\sigma^2_{prior}}\times \mathbf{dy}$$
 The posterior observations $\mathbf{y}_{post}$ and of the parameters $\theta_{post}$ is then given by
