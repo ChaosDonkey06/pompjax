@@ -41,6 +41,10 @@ The posterior observations $\mathbf{y}_{post}$ and of the parameters $\theta_{po
 
 $$\mathbf{y_t}^{post}= \mathbf{y_t}+\mathbf{dy}$$
 $$\bm{\theta}_{post}=\bm{\theta} + \bm{d\theta}$$
+## The Particle Filter with importance sampling (a.k.a. Sequential Monte Carlo)
+
+The PF additionally (compared to the EAKF) have a measure
+$L(z_t, y_t; \theta)$ (the importance density), that given that the exact likelihood cannot be computed it measures how a particle reproduce the observations. The filter then sort the ensembles/particles according to the importance density and them resample - fixed resample parameter across assimilation steps (Arumpalam et. al).
 
 ## The Iterated Filtering
 The iterated filtering (IF) uses multiple rounds of the EAKF through the observed time series to produce a maximum likelihood point estimate of the parameter space $\theta_{\text{MLE}}$ and shrinks the prior range of the parameter space so that it starts the EAKF assimilation closer to the past point estimate. We implement the second version of the iterated filtering (IF2) which additionally adds a prescribed perturbation to the parameter space that I assumed to be normally distributed (the authors allow this to be any density but 🤷‍♂️) with mean 0 and diagonal covariance matrix $H=diag([\sigma_{\theta_1}^2, \sigma_{\theta_2}^2, ..., \sigma_{\theta_p}^2])$. Here $\sigma_{\theta_i}$ is the variance of the noise for the parameter $i$.
