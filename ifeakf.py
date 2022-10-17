@@ -4,12 +4,13 @@ import jax
 
 from tqdm import tqdm
 
-from utils_probability import sample_uniform, sample_normal
+from utils_probability import sample_uniform, truncated_normal
 from eakf import check_param_space, check_state_space, eakf
 
 
-def random_walk_perturbation(x, σ, p, m):
-    return x + σ * onp.random.normal(size=(p, m))
+def random_walk_perturbation(key, x, σ, p, m):
+    a = x.T + σ * jax.random.uniform(key, shape=(m, p))
+    return a.T
 
 def geometric_cooling(if_iters, cooling_factor=0.9):
     alphas = cooling_factor**np.arange(if_iters)
@@ -48,7 +49,6 @@ def ifeakf(process_model,
     sim_dates   = model_settings["dates"]
     assim_dates = if_settings["assimilation_dates"]
 
-
     param_range = parameters_range.copy()
     std_param   = param_range[:,1] - param_range[:,0]
     SIG         = std_param ** 2 / 4; #  Initial covariance of parameters
@@ -64,22 +64,22 @@ def ifeakf(process_model,
     keys_if = jax.random.split(key, if_settings["Nif"])
 
     for n in tqdm(range(if_settings["Nif"])):
+
         if n==0:
-            θ              = sample_uniform(keys_if[n], param_range[:,0], param_range[:,1], p, m)
-            x              = state_space_initial_guess()
-            θmean.at[:, n].set(np.mean(θ, -1))
+            θ     = sample_uniform(keys_if[n], param_range[:,0], param_range[:,1], p, m)
+            x     = state_space_initial_guess()
+            θmean = θmean.at[:, n].set(np.mean(θ, -1))
 
         else:
             pmean     = θmean.at[:,n].get()
-            pvar      = SIG * (if_settings["alpha_mif"]**n)**2
-            θ         = sample_normal(keys_if[n], param_range[:,0], param_range[:,1], pmean, pvar, m=300)
+            pvar      = SIG * (if_settings["shrinkage_factor"]**n)**2
+            θ         = truncated_normal(keys_if[n], pmean, pvar,  param_range.at[:,0].get(), param_range.at[:,1].get(), p, m)
             x         = state_space_initial_guess()
 
         t_assim = 0
         ycum    = np.zeros((k, m))
 
         for t, date in enumerate(sim_dates):
-            print(t)
             x    = process_model(t, x, θ)
             y    = observational_model(t, x, θ)
             ycum += y
@@ -87,8 +87,8 @@ def ifeakf(process_model,
             if date == assim_dates[t_assim]:
                 date_infer =  assim_dates[t_assim]
 
-                #σp = perturbation*cooling_sequence.at[n].get()
-                #θ  = random_walk_perturbation(θ, σp, p, m)
+                σp = perturbation*cooling_sequence.at[n].get()
+                θ  = random_walk_perturbation(jax.random.split(keys_if[n])[0], θ, σp, p, m)
 
                 # Measured observations
                 z     = observations_df.loc[date_infer][[f"y{i+1}" for i in range(k)]].values
@@ -100,14 +100,15 @@ def ifeakf(process_model,
 
                 # Update parameter space
                 θ, y = eakf(θ, ycum, z, oev)
-                θ    = check_param_space(θ, param_range, p)
+                θ    = check_param_space(keys_if[n], θ, param_range)
 
-                θpost.at[:, :, n, t_assim].set(θ)
+                θpost = θpost.at[:, :, n, t_assim].set(θ)
 
                 ycum     = np.zeros((k, m))
                 t_assim  += 1
 
-        θmean.at[:,n+1].set(θpost.mean(-1).mean(-1)) # average posterior over all assimilation times and them over all IF iterations
+        θtime = θpost.at[:, :, n, :].get()
+        θmean = θmean.at[:,n+1].set(θtime.mean(-1).mean(-1)) # average posterior over all assimilation times and them over all IF iterations
 
     return θmean, θpost
 

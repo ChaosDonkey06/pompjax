@@ -1,27 +1,24 @@
 
 import jax.numpy as np
 import numpy as onp
+import jax
 
 def check_state_space(x, xrange):
-    return np.clip(x, xrange.at[0,0].get(), xrange.at[1,0].get())
+    return np.clip(x.T, a_min=xrange.at[:,0].get(), a_max=xrange.at[:,1].get()).T
 
-def check_param_space(θ, prange, p):
-    θh = np.full_like(θ, np.nan)
-    for ip in range(p):
-        loww = prange[0, ip]
-        upp  = prange[1, ip]
+def check_param_space(key, θ, prange):
+    key1, key2 = jax.random.split(key, 2)
 
-        θi = θ[ip, :].copy()
+    loww = np.expand_dims(prange.at[:, 0].get(), -1)
+    uppp = np.expand_dims(prange.at[:, 1].get(), -1)
 
+    teta_correct_low = loww*(1+0.1*jax.random.uniform(key1, θ.shape))
+    teta_correct_up  = uppp*(1-0.1*jax.random.uniform(key2, θ.shape))
 
-        idx_wrong_loww = np.where(θi < loww)[0]
-        idx_wrong_upp  = np.where(θi > upp)[0]
+    θ = np.where(θ < loww, x=teta_correct_low, y=θ)
+    θ = np.where(θ > uppp, x=teta_correct_up,  y=θ)
 
-        θi.at[idx_wrong_loww].set(loww * (1+0.1*onp.random.rand( idx_wrong_loww.shape[0])))
-        θi.at[idx_wrong_upp].set( upp  * (1-0.1*onp.random.rand( idx_wrong_upp.shape[0])))
-        θh.at[p, :].set(θi)
-
-    return θh
+    return θ
 
 def eakf(x, y, z, oev):
     μ_prior  = y.mean()
