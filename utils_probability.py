@@ -1,11 +1,12 @@
 import jax.numpy as np
 import jax
 
-def sample_uniform(key, x_min, x_max, m=300):
+def sample_uniform(key, vmin, vmax, p, m=300):
     """
     Generate m sample from a uniform distribution
     """
-    return jax.random.uniform(key, shape=(1, m), minval=x_min, maxval=x_max)
+    rn =  jax.random.uniform(key, shape=(m, p)) * (vmax - vmin) + vmin
+    return rn.T
 
 def truncated_normal(key, mean, sd, lower, upper, shape, dtype=np.float64):
     """
