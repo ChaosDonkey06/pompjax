@@ -13,7 +13,7 @@ def truncated_normal(key, mean, var, lower, upper, p, m, dtype=np.float64):
     Generate a truncated normal distribution
     """
     samples = jax.random.truncated_normal(key, shape=(m, p), lower= lower, upper=upper, dtype=dtype) * (var)**(1/2) + mean
-    return samples
+    return samples.T
 
 def truncated_multivariate_normal(key, μ, cov, shape, lower, upper):
     """

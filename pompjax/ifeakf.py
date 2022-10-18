@@ -71,14 +71,14 @@ def ifeakf(process_model,
 
         if n==0:
             θ     = sample_uniform(keys_if[n], param_range[:,0], param_range[:,1], p, m)
-            x     = state_space_initial_guess()
+            x     = state_space_initial_guess(θ)
             θmean = θmean.at[:, n].set(np.mean(θ, -1))
 
         else:
             pmean     = θmean.at[:,n].get()
             pvar      = SIG * cooling_sequence[n]
             θ         = truncated_normal(keys_if[n], pmean, pvar,  param_range.at[:,0].get(), param_range.at[:,1].get(), p, m)
-            x         = state_space_initial_guess()
+            x         = state_space_initial_guess(θ)
 
         t_assim = 0
         ycum    = np.zeros((k, m))
@@ -95,8 +95,8 @@ def ifeakf(process_model,
             θ  = random_walk_perturbation(θ, σp, p, m)
             θ  = checkbound_params(θ, param_range)
 
-            θ   = inflate_ensembles(θ, inflation_value=if_settings["inflation"], m=m)
-            θ   = check_state_space(θ, param_range)
+            θ  = inflate_ensembles(θ, inflation_value=if_settings["inflation"], m=m)
+            θ  = check_state_space(θ, param_range)
 
             if date == assim_dates[t_assim]:
                 date_infer =  assim_dates[t_assim]
@@ -106,16 +106,18 @@ def ifeakf(process_model,
                 oev   = observations_df.loc[date_infer][[f"oev{i+1}" for i in range(k)]].values
 
                 # Update state space
-                x, y = eakf(x, ycum, z, oev)
-                x    = check_state_space(x, state_space_range)
+                x, _ = eakf(x, ycum, z, oev)
+                θ, _ = eakf(θ, ycum, z, oev)
 
-                # Update parameter space
-                θ, y = eakf(θ, ycum, z, oev)
-                #θ   = checkbound_params(keys_if[n], θ, param_range)
+                # check for a-physicalities in the state and parameter space.
+                x    = check_state_space(x, state_space_range)
                 θ    = checkbound_params(θ, param_range)
 
-                θpost = θpost.at[:, :, t_assim, n].set(θ)
+                # Update parameter space
+                #θ   = checkbound_params(keys_if[n], θ, param_range)
 
+                # save posterior parameter
+                θpost    = θpost.at[:, :, t_assim, n].set(θ)
                 ycum     = np.zeros((k, m))
                 t_assim  += 1
 
