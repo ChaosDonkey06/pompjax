@@ -10,11 +10,7 @@ setup(
     author_email     = 'jc5647@cumc.columbia.edu.co',
     license          = 'MIT License',
     packages         = ['pompjax'],
-    install_requires =['mpi4py>=2.0',
-                       'numpy',
-                      ],
-    install_requires = parse_requirements('requirements.txt', session='hack')
-
+    install_requires = parse_requirements('requirements.txt', session='hack'),
     classifiers=[
         'Development Status :: 1 - Planning',
         'Intended Audience :: Science/Research',
