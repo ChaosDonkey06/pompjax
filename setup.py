@@ -1,3 +1,4 @@
+from pip.req import parse_requirements
 from setuptools import setup
 
 setup(
@@ -12,6 +13,7 @@ setup(
     install_requires =['mpi4py>=2.0',
                        'numpy',
                       ],
+    install_requires = parse_requirements('requirements.txt', session='hack')
 
     classifiers=[
         'Development Status :: 1 - Planning',
