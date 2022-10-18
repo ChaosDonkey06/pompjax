@@ -50,11 +50,11 @@ def ifeakf(process_model,
     assim_dates = if_settings["assimilation_dates"]
 
     param_range = parameters_range.copy()
-    std_param   = param_range[:,1] - param_range[:,0]
+    std_param   = param_range[:, 1] - param_range[:,0]
     SIG         = std_param ** 2 / 4; #  Initial covariance of parameters
 
     if perturbation is None:
-        perturbation = std_param ** 2 / 10
+        perturbation = std_param / 10
 
     assimilation_times = len(observations_df)
 
