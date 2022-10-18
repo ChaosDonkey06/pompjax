@@ -35,9 +35,9 @@ def ifeakf(process_model,
             model_settings,
             if_settings,
             cooling_sequence=None,
-            perturbation=None):
+            perturbation=None,
+            key = jax.random.PRNGKey(0)):
 
-    key = jax.random.PRNGKey(0)
     if cooling_sequence is None:
         cooling_sequence   = cooling(if_settings["Nif"], type_cool=if_settings["type_cooling"], cooling_factor=if_settings["shrinkage_factor"])
 
