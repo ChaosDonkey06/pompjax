@@ -1,5 +1,7 @@
-from pip.req import parse_requirements
 from setuptools import setup
+
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
 
 setup(
     name             = 'pompjax',
@@ -10,7 +12,7 @@ setup(
     author_email     = 'jc5647@cumc.columbia.edu.co',
     license          = 'MIT License',
     packages         = ['pompjax'],
-    install_requires = parse_requirements('requirements.txt', session='hack'),
+    install_requires = required,
     classifiers=[
         'Development Status :: 1 - Planning',
         'Intended Audience :: Science/Research',
