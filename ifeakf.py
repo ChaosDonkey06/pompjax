@@ -54,7 +54,7 @@ def ifeakf(process_model,
     SIG         = std_param ** 2 / 4; #  Initial covariance of parameters
 
     if perturbation is None:
-        perturbation = std_param ** 2 / 4
+        perturbation = std_param ** 2 / 10
 
     assimilation_times = len(observations_df)
 

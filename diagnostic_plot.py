@@ -22,7 +22,7 @@ def convergence_plot(p_mean, p_post, p_range, param_label=None, param_truth=None
         axi.fill_between(range(1,Nif+1), param_df["low_50"], param_df["high_50"], color="gray", alpha=0.4, label="50% CI")
 
         if param_truth:
-            axi.axhline(y=param_truth, color="red", linestyle="--", lw=2, label="Truth")
+            axi.axhline(y=param_truth[idx], color="red", linestyle="--", lw=2, label="Truth")
 
         axi.set_ylabel(p_lab)
         axi.legend(loc="upper right", ncol=1)
