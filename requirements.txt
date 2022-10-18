@@ -1,4 +1,3 @@
-absl-py @ file:///home/conda/feedstock_root/build_artifacts/absl-py_1658854572623/work
 appnope==0.1.3
 asttokens==2.0.8
 backcall==0.2.0
@@ -7,13 +6,11 @@ cycler==0.11.0
 debugpy==1.6.3
 decorator==5.1.1
 entrypoints==0.4
-etils @ file:///home/conda/feedstock_root/build_artifacts/etils_1663033893010/work
 executing==1.0.0
 fonttools==4.37.3
-importlib-resources @ file:///home/conda/feedstock_root/build_artifacts/importlib_resources_1658604161399/work
 ipykernel==6.15.3
 ipython==8.5.0
-jax @ file:///home/conda/feedstock_root/build_artifacts/jax_1661988204326/work
+jax
 jaxlib==0.3.15
 jedi==0.18.1
 jupyter-core==4.11.1
@@ -22,8 +19,6 @@ kiwisolver==1.4.4
 matplotlib==3.6.0
 matplotlib-inline==0.1.6
 nest-asyncio==1.5.5
-numpy @ file:///Users/runner/miniforge3/conda-bld/numpy_1662888927969/work
-opt-einsum @ file:///home/conda/feedstock_root/build_artifacts/opt_einsum_1617859230218/work
 packaging==21.3
 pandas==1.5.0
 parso==0.8.3
@@ -46,6 +41,4 @@ stack-data==0.5.0
 tornado==6.2
 tqdm==4.64.1
 traitlets==5.4.0
-typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/typing_extensions_1656706066251/work
 wcwidth==0.2.5
-zipp @ file:///home/conda/feedstock_root/build_artifacts/zipp_1659400682470/work
