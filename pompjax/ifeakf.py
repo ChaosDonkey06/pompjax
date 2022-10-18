@@ -5,12 +5,15 @@ import jax
 from tqdm import tqdm
 
 from utils_probability import sample_uniform, truncated_normal
-from eakf import check_param_space, check_state_space, eakf
+from eakf import check_param_space, check_state_space, eakf, checkbound_params, inflate_ensembles
 
 
 def random_walk_perturbation(key, x, σ, p, m):
     a = x.T + σ * jax.random.uniform(key, shape=(m, p))
     return a.T
+
+def random_walk_perturbation(param, param_std, p, m):
+    return param + onp.array([param_std]).T * onp.random.normal(size=(p, m))
 
 def geometric_cooling(if_iters, cooling_factor=0.9):
     alphas = cooling_factor**np.arange(if_iters)
@@ -26,6 +29,7 @@ def cooling(num_iteration_if, type_cool="geometric", cooling_factor=0.9):
     elif type_cool=="hyperbolic":
         return hyperbolic_cooling(num_iteration_if, cooling_factor=cooling_factor)
 
+
 def ifeakf(process_model,
             observational_model,
             state_space_initial_guess,
@@ -34,9 +38,9 @@ def ifeakf(process_model,
             state_space_range,
             model_settings,
             if_settings,
-            cooling_sequence=None,
-            perturbation=None,
-            key = jax.random.PRNGKey(0)):
+            cooling_sequence = None,
+            perturbation     = None,
+            key              = jax.random.PRNGKey(0)):
 
     if cooling_sequence is None:
         cooling_sequence   = cooling(if_settings["Nif"], type_cool=if_settings["type_cooling"], cooling_factor=if_settings["shrinkage_factor"])
@@ -58,8 +62,8 @@ def ifeakf(process_model,
 
     assimilation_times = len(observations_df)
 
-    θpost = np.full((p, m, if_settings["Nif"], assimilation_times), np.nan)
-    θmean = np.full((p, if_settings["Nif"]+1), np.nan)
+    θpost = np.full((p, m, assimilation_times, if_settings["Nif"]), np.nan)
+    θmean = np.full((p,    if_settings["Nif"]+1), np.nan)
 
     keys_if = jax.random.split(key, if_settings["Nif"])
 
@@ -72,7 +76,7 @@ def ifeakf(process_model,
 
         else:
             pmean     = θmean.at[:,n].get()
-            pvar      = SIG * (if_settings["shrinkage_factor"]**n)**2
+            pvar      = SIG * cooling_sequence[n]
             θ         = truncated_normal(keys_if[n], pmean, pvar,  param_range.at[:,0].get(), param_range.at[:,1].get(), p, m)
             x         = state_space_initial_guess()
 
@@ -80,15 +84,22 @@ def ifeakf(process_model,
         ycum    = np.zeros((k, m))
 
         for t, date in enumerate(sim_dates):
-            x    = process_model(t, x, θ)
+            x   = process_model(t, x, θ)
+            x   = inflate_ensembles(x, inflation_value=if_settings["inflation"], m=m)
+            x   = check_state_space(x, state_space_range)
+
             y    = observational_model(t, x, θ)
             ycum += y
 
+            σp = perturbation*cooling_sequence.at[n].get()
+            θ  = random_walk_perturbation(θ, σp, p, m)
+            θ  = checkbound_params(θ, param_range)
+
+            θ   = inflate_ensembles(θ, inflation_value=if_settings["inflation"], m=m)
+            θ   = check_state_space(θ, param_range)
+
             if date == assim_dates[t_assim]:
                 date_infer =  assim_dates[t_assim]
-
-                σp = perturbation*cooling_sequence.at[n].get()
-                θ  = random_walk_perturbation(jax.random.split(keys_if[n])[0], θ, σp, p, m)
 
                 # Measured observations
                 z     = observations_df.loc[date_infer][[f"y{i+1}" for i in range(k)]].values
@@ -100,15 +111,16 @@ def ifeakf(process_model,
 
                 # Update parameter space
                 θ, y = eakf(θ, ycum, z, oev)
-                θ    = check_param_space(keys_if[n], θ, param_range)
+                #θ   = checkbound_params(keys_if[n], θ, param_range)
+                θ    = checkbound_params(θ, param_range)
 
-                θpost = θpost.at[:, :, n, t_assim].set(θ)
+                θpost = θpost.at[:, :, t_assim, n].set(θ)
 
                 ycum     = np.zeros((k, m))
                 t_assim  += 1
 
-        θtime = θpost.at[:, :, n, :].get()
-        θmean = θmean.at[:,n+1].set(θtime.mean(-1).mean(-1)) # average posterior over all assimilation times and them over all IF iterations
+        θtime = θpost.at[:, :, :, n].get()
+        θmean = θmean.at[:,n+1].set(θtime.mean(-1).mean(-1)) # average posterior over all assimilation times and them over all ensemble members
 
     return θmean, θpost
 

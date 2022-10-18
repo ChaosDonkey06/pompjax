@@ -8,12 +8,12 @@ def sample_uniform(key, vmin, vmax, p, m=300):
     rn =  jax.random.uniform(key, shape=(m, p)) * (vmax - vmin) + vmin
     return rn.T
 
-def truncated_normal(key, mean, sd, lower, upper, p, m, dtype=np.float64):
+def truncated_normal(key, mean, var, lower, upper, p, m, dtype=np.float64):
     """
     Generate a truncated normal distribution
     """
-    samples = jax.random.truncated_normal(key, shape=(m, p), lower= lower, upper=upper, dtype=dtype) * (sd)**(1/2) + mean
-    return samples.T
+    samples = jax.random.truncated_normal(key, shape=(m, p), lower= lower, upper=upper, dtype=dtype) * (var)**(1/2) + mean
+    return samples
 
 def truncated_multivariate_normal(key, μ, cov, shape, lower, upper):
     """
