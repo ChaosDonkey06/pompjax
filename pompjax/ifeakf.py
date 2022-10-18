@@ -8,9 +8,9 @@ from utils_probability import sample_uniform, truncated_normal, sample_uniform2,
 from eakf import check_param_space, check_state_space, eakf, checkbound_params, inflate_ensembles
 
 
-def random_walk_perturbation(key, x, σ, p, m):
-    rw = x.T + σ * jax.random.uniform(key, shape=(m, p))
-    return rw.T
+#def random_walk_perturbation(key, x, σ, p, m):
+#    rw = x.T + σ * jax.random.uniform(key, shape=(m, p))
+#    return rw.T
 
 def random_walk_perturbation(param, param_std, p, m):
     return param + onp.array([param_std]).T * onp.random.normal(size=(p, m))
