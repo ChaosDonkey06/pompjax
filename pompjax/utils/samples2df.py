@@ -5,24 +5,23 @@ def create_df_response(samples, time,  quantiles = [50, 80, 95], forecast_horizo
     """ Create a dataframe with the quantiles of the model and forecast if provided
 
     Args:
-        samples: Samples of the variable to create the dataframe
-        time:    [description]
-        date_init (str, optional): [description]. Defaults to '2020-03-06'.
+        samples    : Samples of the variable to create the dataframe. It should be a 2D array with shape (n_time, n_samples)
+        time (int) : n_time
+        date_init (str, optional):        [description]. Defaults to '2020-03-06'.
         forecast_horizon (int, optional): [description]. Defaults to 27.
-        use_future (bool, optional): [description]. Defaults to False.
+        use_future (bool, optional):      [description]. Defaults to False.
 
     Returns:
-        [type]: [description]
+        df_response: Dataframe with the quantiles of the model, mean, median and std.
     """
 
-    if samples.shape[-1] != time:
-        raise Exception("Samples second dimension must be equal to time")
+    if samples.shape[0] != time:
+        raise Exception("Samples first dimension must be equal to time")
 
     if dates is not None:
         dates_fitted = dates
     elif date_init is not None and sample_freq is not None:
         dates_fitted = pd.date_range(pd.to_datetime(date_init), periods=time, freq=sample_freq)
-
     else:
         dates_fitted   = list(range(time))
         dates_forecast = list(range(time, time+forecast_horizon))
@@ -34,21 +33,21 @@ def create_df_response(samples, time,  quantiles = [50, 80, 95], forecast_horizo
         dates += list(dates_forecast)
         types += ['forecast']*len(dates_forecast)
 
-    results_df  = pd.DataFrame(samples.T)
+    results_df  = pd.DataFrame(samples)
     df_response = pd.DataFrame(index=dates)
 
     # Calculate key statistics
-    df_response['mean']        = results_df.mean(axis=1).values
-    df_response['median']      = results_df.median(axis=1).values
-    df_response['std']         = results_df.std(axis=1).values
+    df_response['mean']   = results_df.mean(axis=1).values
+    df_response['median'] = results_df.median(axis=1).values
+    df_response['std']    = results_df.std(axis=1).values
 
     for quant in quantiles:
-        low_q  = ((100-quant)/2)/100
-        high_q = 1-low_q
+        low_q                        = ((100-quant)/2)/100
+        high_q                       = 1-low_q
         df_response[f'low_{quant}']  = results_df.quantile(q=low_q, axis=1).values
         df_response[f'high_{quant}'] = results_df.quantile(q=high_q, axis=1).values
 
-    df_response['type']        =  types
+    df_response['type']    =  types
     df_response.index.name = 'date'
 
     return df_response

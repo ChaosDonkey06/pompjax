@@ -4,13 +4,10 @@ import jax
 
 from tqdm import tqdm
 
-from .utils_probability import sample_uniform, truncated_normal, sample_uniform2, sample_truncated_normal
-from .eakf import check_param_space, check_state_space, eakf, checkbound_params, inflate_ensembles
+from stats import sample_uniform, truncated_normal, sample_uniform2, sample_truncated_normal
+from inference import check_param_space, check_state_space, eakf, checkbound_params, inflate_ensembles
 
 
-#def random_walk_perturbation(key, x, σ, p, m):
-#    rw = x.T + σ * jax.random.uniform(key, shape=(m, p))
-#    return rw.T
 
 def random_walk_perturbation(param, param_std):
     p, m = param.shape
@@ -49,7 +46,7 @@ def ifeakf(process_model,
             key              = jax.random.PRNGKey(0)):
 
     if cooling_sequence is None:
-        cooling_sequence   = cooling(if_settings["Nif"], type_cool=if_settings["type_cooling"], cooling_factor=if_settings["shrinkage_factor"])
+        cooling_sequence = cooling(if_settings["Nif"], type_cool=if_settings["type_cooling"], cooling_factor=if_settings["shrinkage_factor"])
 
     k           = model_settings["k"] # Number of observations
     p           = model_settings["p"] # Number of parameters (to be estimated)
@@ -118,8 +115,9 @@ def ifeakf(process_model,
 
                 θ_prior = θ_post.copy()
                 x       = x_post.copy()
+
                 # Update parameter space
-                #θ   = checkbound_params(keys_if[n], θ, param_range)
+
                 # save posterior parameter
                 θ_time   = θ_time.at[:, :, t_assim].set(θ_post)
                 ycum     = np.zeros((k, m))

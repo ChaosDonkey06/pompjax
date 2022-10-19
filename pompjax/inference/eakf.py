@@ -36,6 +36,10 @@ def checkbound_params(params, prange):
         idx_wrong_loww = onp.where(p_ens < loww)[0]
         idx_wrong_upp  = onp.where(p_ens > upp)[0]
 
+        idx_wrong        = np.where(np.logical_or(p_ens <loww, p_ens > upp))[0]
+        idx_good         = np.where(np.logical_or(p_ens >=loww, p_ens <= upp))[0]
+        p_ens[idx_wrong] = np.median(p_ens[idx_good])
+
         onp.put(p_ens, idx_wrong_loww, loww * (1+0.2*onp.random.rand( idx_wrong_loww.shape[0])) )
         onp.put(p_ens, idx_wrong_upp,  upp  * (1-0.2*onp.random.rand( idx_wrong_upp.shape[0])) )
 
