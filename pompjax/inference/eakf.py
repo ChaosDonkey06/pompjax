@@ -1,13 +1,13 @@
 
-import jax.numpy as np
-import numpy as onp
+import jax.numpy as jnp
+import numpy as np
 import jax
 
 def check_state_space(x, xrange):
     """
     Constrain the state space x to the defined range
     """
-    return np.clip(x.T, a_min=xrange.at[:,0].get(), a_max=xrange.at[:,1].get()).T
+    return np.clip(x, a_min=xrange[0], a_max=xrange[1])
 
 def check_param_space(key, θ, prange):
     key1, key2       = jax.random.split(key, 2)
@@ -27,58 +27,96 @@ def checkbound_params(params, prange):
     p, _ = prange.shape
 
     params_update = []
-    for idx_p, p in enumerate(range(p)):
-        loww = onp.array(prange.at[p, 0].get())
-        upp  = onp.array(prange.at[p, 1].get())
+    for ip in range(p):
+        loww = np.array(prange[ip, 0])
+        upp  = np.array(prange[ip, 1])
 
-        p_ens = onp.array(params.at[idx_p, :].get())
+        p_ens = np.array(params[ip, :])
 
-        idx_wrong_loww = onp.where(p_ens < loww)[0]
-        idx_wrong_upp  = onp.where(p_ens > upp)[0]
+        idx_wrong_loww = np.where(p_ens < loww)[0]
+        idx_wrong_upp  = np.where(p_ens > upp)[0]
 
         idx_wrong        = np.where(np.logical_or(p_ens <loww, p_ens > upp))[0]
         idx_good         = np.where(np.logical_or(p_ens >=loww, p_ens <= upp))[0]
         p_ens[idx_wrong] = np.median(p_ens[idx_good])
 
-        onp.put(p_ens, idx_wrong_loww, loww * (1+0.2*onp.random.rand( idx_wrong_loww.shape[0])) )
-        onp.put(p_ens, idx_wrong_upp,  upp  * (1-0.2*onp.random.rand( idx_wrong_upp.shape[0])) )
+        np.put(p_ens, idx_wrong_loww, loww * (1+0.2*np.random.rand( idx_wrong_loww.shape[0])) )
+        np.put(p_ens, idx_wrong_upp,  upp  * (1-0.2*np.random.rand( idx_wrong_upp.shape[0])) )
 
         params_update.append(p_ens)
 
     return np.array(params_update)
 
 def inflate_ensembles(ens, inflation_value=1.2, m=300):
-    return onp.mean(ens,1, keepdims=True) * np.ones((1,m)) + inflation_value*(ens-onp.mean(ens,1, keepdims=True) * np.ones((1,m)))
+    return np.mean(ens,1, keepdims=True) * np.ones((1,m)) + inflation_value*(ens-np.mean(ens,1, keepdims=True) * np.ones((1,m)))
 
 def eakf(x, y, z, oev):
     p, m = x.shape
 
-    μ_prior  = y.mean()
-    σ2_prior = y.var()
+    mu_prior  = y.mean()
+    var_prior = y.var()
 
-    if μ_prior == 0: # degenerate prior.
-        σ2_post  = 1e-3
-        σ2_prior = 1e-3
+    if mu_prior == 0: # degenerate prior.
+        var_post  = 1e-3
+        var_prior = 1e-3
 
-    σ2_post  = σ2_prior * oev / (σ2_prior + oev)
-    μ_post   = σ2_post  * (μ_prior/σ2_prior + z/oev)
-    α        = (oev / (oev + σ2_prior)) ** (0.5)
-    dy       = (μ_post-y) + α *  (y-μ_prior)
+    var_post  = var_prior * oev / (var_prior + oev)
+    mu_post   = var_post  * (mu_prior/var_prior + z/oev)
+    alpha    = (oev / (oev + var_prior)) ** (0.5)
+    dy       = (mu_post-y) + alpha * (y-mu_prior)
 
     rr = np.full((p, 1), np.nan)
     for ip in range(p):
-        A  = onp.cov(x.at[ip,:].get(), y)
-        rr = rr.at[ip,:].set( A[1, 0] / σ2_prior )
-
+        A  = np.cov(x[ip, :], y)
+        rr[ip,:] =  A[1, 0] / var_prior
     dx       = np.dot(rr, dy)
-    #print("dy shape", dy.shape)
-    #print("dx shape", dx.shape)
-    #print("rr shape", rr.shape)
-
-    #rr       = np.cov(x, y).at[-1,:-1].get() / σ2_prior
-    #dx       = np.dot(np.expand_dims(rr, -1), dy )
 
     xpost = x + dx
     ypost = y + dy
 
     return xpost, ypost
+
+
+def eakf_step(x, param, y, z, oev):
+    num_var, num_ensx = x.shape
+    num_p, num_ensp = param.shape
+
+    if num_ensx == num_ensp:
+        assert("Number of ensembles in x and param must be the same")
+
+    mu_prior  = y.mean()
+    var_prior = y.var()
+
+    if mu_prior == 0:
+        var_post  = 1e-3
+        var_prior = 1e-3
+
+
+    var_post  = var_prior * oev / (var_prior + oev)
+    post_mean_ct = var_post * (mu_prior/var_prior + z / oev)
+    alpha        = oev / (oev+var_prior); alpha = alpha**0.5
+    dy           = post_mean_ct + alpha*( y - mu_prior ) - y
+
+    # adjust parameters
+    rr = []
+    for idx_p in range(num_p):
+        A = np.cov(param[idx_p,:], y)
+        rr.append( A[1,0] / var_prior )
+
+    rr         = np.array(rr)
+    dx         = np.dot( np.expand_dims(rr,-1), np.expand_dims(dy, 0) )
+    param_post = param + dx
+
+    # adjust variables
+    rr = []
+    for idx_var in range(num_var):
+        A = np.cov(x[idx_var,:], y)
+        rr.append( A[1,0] / var_prior )
+    rr       = np.array(rr)
+    dx       = np.dot( np.expand_dims(rr,-1), np.expand_dims(dy, 0) )
+    x_post   = x + dx
+
+    obs_post    = y + dy
+
+    return x_post, param_post, obs_post
+

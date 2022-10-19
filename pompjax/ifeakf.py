@@ -1,17 +1,18 @@
-import jax.numpy as np
-import numpy as onp
+import jax.numpy as jnp
+import pandas as pd
+import numpy as np
 import jax
 
 from tqdm import tqdm
 
 from stats import sample_uniform, truncated_normal, sample_uniform2, sample_truncated_normal
-from inference import check_param_space, check_state_space, eakf, checkbound_params, inflate_ensembles
+from inference import check_param_space, check_state_space, eakf, eakf_step, checkbound_params, inflate_ensembles
 
 
 
 def random_walk_perturbation(param, param_std):
     p, m = param.shape
-    return param + onp.array([param_std]).T * onp.random.normal(size=(p, m))
+    return param + np.expand_dims(param_std, -1) * np.random.normal(size=(p, m))
 
 def geometric_cooling(if_iters, cooling_factor=0.9):
     """ Geometric cooling
@@ -42,8 +43,7 @@ def ifeakf(process_model,
             model_settings,
             if_settings,
             cooling_sequence = None,
-            perturbation     = None,
-            key              = jax.random.PRNGKey(0)):
+            perturbation     = None):
 
     if cooling_sequence is None:
         cooling_sequence = cooling(if_settings["Nif"], type_cool=if_settings["type_cooling"], cooling_factor=if_settings["shrinkage_factor"])
@@ -65,66 +65,67 @@ def ifeakf(process_model,
 
     assimilation_times = len(assim_dates)
 
-    θ_post_all = np.full((p, m, assimilation_times, if_settings["Nif"]), np.nan)
-    θ_mean     = np.full((p, if_settings["Nif"]+1), np.nan)
-
-    keys_if = jax.random.split(key, if_settings["Nif"])
+    param_post_all = np.full((p, m, assimilation_times, if_settings["Nif"]), np.nan)
+    param_mean     = np.full((p, if_settings["Nif"]+1), np.nan)
 
     for n in tqdm(range(if_settings["Nif"])):
         if n==0:
-            #θprior = sample_uniform(keys_if[n], param_range[:,0], param_range[:,1], p, m)
-            θ_prior = sample_uniform2(param_range, m)
-            x       = state_space_initial_guess(θ_prior)
-            θ_mean  = θ_mean.at[:,n].set(np.mean(θ_prior, -1))
+            p_prior     = sample_uniform2(param_range, m)
+            x           = state_space_initial_guess(p_prior)
+            param_mean[:, n] = np.mean(p_prior, -1)
         else:
-            pmean   = θ_mean.at[:,n].get()
+            pmean   = param_mean[:, n]
             pvar    = SIG * cooling_sequence[n]
-            θ_prior = sample_truncated_normal(pmean, pvar ** (0.5), param_range, m)
-            x       = state_space_initial_guess(θ_prior)
+            p_prior = sample_truncated_normal(pmean, pvar ** (0.5), param_range, m)
+            x       = state_space_initial_guess(p_prior)
 
         t_assim = 0
-        ycum    = np.zeros((k, m))
-        θ_time  = np.full((p, m, assimilation_times), np.nan)
+        cum_obs    = np.zeros((k, m))
+        param_time  = np.full((p, m, assimilation_times), np.nan)
 
         for t, date in enumerate(sim_dates):
-            x     = process_model(t, x, θ_prior)
-            y     = observational_model(t, x, θ_prior)
-            ycum += y
+            x     = process_model(t, x, p_prior)
+            y     = observational_model(t, x, p_prior)
+            cum_obs += y
 
-            if date == assim_dates[t_assim]:
-                σp      = perturbation*cooling_sequence[n]
-                θ_prior = random_walk_perturbation(θ_prior, σp)
-                θ_prior = checkbound_params(θ_prior, param_range)
+            if pd.to_datetime(date) == pd.to_datetime(assim_dates[t_assim]):
+                #print(cum_obs.mean())
+
+                pert_noise  = perturbation*cooling_sequence[n]
+                p_prior     = random_walk_perturbation(p_prior, pert_noise)
+                p_prior     = checkbound_params(p_prior, param_range)
 
                 # Measured observations
-                z     = observations_df.loc[date][[f"y{i+1}" for i in range(k)]].values
-                oev   = observations_df.loc[date][[f"oev{i+1}" for i in range(k)]].values
+                z     = observations_df.loc[pd.to_datetime(date)][[f"y{i+1}" for i in range(k)]].values
+                oev   = observations_df.loc[pd.to_datetime(date)][[f"oev{i+1}" for i in range(k)]].values
 
-                x_prior = x.copy()
 
                 # Update state space
-                x_post, _ = eakf(x_prior, ycum, z, oev)
-                θ_post, _ = eakf(θ_prior, ycum, z, oev)
+                #x_post, _ = eakf(x_prior, cum_obs, z, oev)
+                #p_post, _ = eakf(p_prior, cum_obs, z, oev)
+                x_prior = x.copy()
+                p_post  = p_prior.copy()
+
+                x_post, p_post, _ = eakf_step(x_prior, p_post, np.squeeze(cum_obs), z, oev)
 
                 x_post = inflate_ensembles(x_post, inflation_value=if_settings["inflation"], m=m)
-                θ_post = inflate_ensembles(θ_post, inflation_value=if_settings["inflation"], m=m)
+                p_post = inflate_ensembles(p_post, inflation_value=if_settings["inflation"], m=m)
 
                 # check for a-physicalities in the state and parameter space.
                 x_post = check_state_space(x_post, state_space_range)
-                θ_post = checkbound_params(θ_post, param_range)
+                p_post = checkbound_params(p_post, param_range)
 
-                θ_prior = θ_post.copy()
+                p_prior = p_post.copy()
                 x       = x_post.copy()
 
-                # Update parameter space
 
                 # save posterior parameter
-                θ_time   = θ_time.at[:, :, t_assim].set(θ_post)
-                ycum     = np.zeros((k, m))
-                t_assim += 1
+                param_time[:, :, t_assim] = p_post
+                cum_obs                   = np.zeros((k, m))
+                t_assim                   += 1
 
-        θ_post_all = θ_post_all.at[:, :, :, n].set(θ_time)
-        θ_mean     = θ_mean.at[:, n+1].set(θ_time.mean(-1).mean(-1)) # average posterior over all assimilation times and them over all ensemble members
+        param_post_all[:, :, :, n] = param_time
+        param_mean[:, n+1]         = param_time.mean(-1).mean(-1) # average posterior over all assimilation times and them over all ensemble members
 
-    return θ_mean, θ_post_all
+    return param_mean, param_post_all
 

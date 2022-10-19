@@ -11,13 +11,13 @@ def convergence_plot(p_mean, posterior_list_df, p_range, param_label=None, param
         fig, ax = plt.subplots(p, 1, figsize=(15.5, 12.2), sharex=True)
 
     for idx, axi in enumerate(ax.flatten()):
-        param_range = p_range.at[idx, :].get()
+        param_range = p_range[idx, :]
         p_lab       = param_label[idx]
         param_df    = posterior_list_df[idx]
 
         axi.plot(range(Nif), p_mean[idx,:], color="k", lw=3, label="Mean")
-        axi.fill_between(param_df.index.values, param_df["low_95"], param_df["high_95"], color="gray", alpha=0.2, label="95% CI")
-        axi.fill_between(param_df.index.values, param_df["low_50"], param_df["high_50"], color="gray", alpha=0.4, label="50% CI")
+        axi.fill_between(param_df.index.values+1, param_df["low_95"], param_df["high_95"], color="gray", alpha=0.2, label="95% CI")
+        axi.fill_between(param_df.index.values+1, param_df["low_50"], param_df["high_50"], color="gray", alpha=0.4, label="50% CI")
 
         if param_truth:
             axi.axhline(y=param_truth[idx], color="red", linestyle="--", lw=2, label="Truth")
