@@ -4,15 +4,16 @@ import jax
 
 from tqdm import tqdm
 
-from utils_probability import sample_uniform, truncated_normal, sample_uniform2, sample_truncated_normal
-from eakf import check_param_space, check_state_space, eakf, checkbound_params, inflate_ensembles
+from .utils_probability import sample_uniform, truncated_normal, sample_uniform2, sample_truncated_normal
+from .eakf import check_param_space, check_state_space, eakf, checkbound_params, inflate_ensembles
 
 
 #def random_walk_perturbation(key, x, σ, p, m):
 #    rw = x.T + σ * jax.random.uniform(key, shape=(m, p))
 #    return rw.T
 
-def random_walk_perturbation(param, param_std, p, m):
+def random_walk_perturbation(param, param_std):
+    p, m = param.shape
     return param + onp.array([param_std]).T * onp.random.normal(size=(p, m))
 
 def geometric_cooling(if_iters, cooling_factor=0.9):
@@ -21,7 +22,6 @@ def geometric_cooling(if_iters, cooling_factor=0.9):
             if_iters       (int): number of iterations of the IF algorithm
             cooling_factor (float): cooling factor (variance shrinking rate)
     """
-
     alphas = cooling_factor**np.arange(if_iters)
     return alphas**2
 
@@ -88,15 +88,16 @@ def ifeakf(process_model,
         t_assim = 0
         ycum    = np.zeros((k, m))
         θ_time  = np.full((p, m, assimilation_times), np.nan)
+
         for t, date in enumerate(sim_dates):
-            x   = process_model(t, x, θ_prior)
-            y   = observational_model(t, x, θ_prior)
+            x     = process_model(t, x, θ_prior)
+            y     = observational_model(t, x, θ_prior)
             ycum += y
 
             if date == assim_dates[t_assim]:
-                σp      = perturbation*cooling_sequence.at[n].get()
-                θ_prior  = random_walk_perturbation(θ_prior, σp, p, m)
-                θ_prior  = checkbound_params(θ_prior, param_range)
+                σp      = perturbation*cooling_sequence[n]
+                θ_prior = random_walk_perturbation(θ_prior, σp)
+                θ_prior = checkbound_params(θ_prior, param_range)
 
                 # Measured observations
                 z     = observations_df.loc[date][[f"y{i+1}" for i in range(k)]].values
@@ -106,10 +107,10 @@ def ifeakf(process_model,
 
                 # Update state space
                 x_post, _ = eakf(x_prior, ycum, z, oev)
-                θ_post, _ = eakf(θ_prior,  ycum, z, oev)
+                θ_post, _ = eakf(θ_prior, ycum, z, oev)
 
                 x_post = inflate_ensembles(x_post, inflation_value=if_settings["inflation"], m=m)
-                θ_post  = inflate_ensembles(θ_post, inflation_value=if_settings["inflation"], m=m)
+                θ_post = inflate_ensembles(θ_post, inflation_value=if_settings["inflation"], m=m)
 
                 # check for a-physicalities in the state and parameter space.
                 x_post = check_state_space(x_post, state_space_range)
