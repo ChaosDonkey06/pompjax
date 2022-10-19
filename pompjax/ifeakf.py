@@ -6,7 +6,7 @@ import jax
 from tqdm import tqdm
 
 from stats import sample_uniform, truncated_normal, sample_uniform2, sample_truncated_normal
-from inference import check_param_space, check_state_space, eakf, eakf_step, checkbound_params, inflate_ensembles
+from inference import check_param_space, check_state_space, eakf, checkbound_params, inflate_ensembles
 
 
 
@@ -89,7 +89,6 @@ def ifeakf(process_model,
             cum_obs += y
 
             if pd.to_datetime(date) == pd.to_datetime(assim_dates[t_assim]):
-                #print(cum_obs.mean())
 
                 pert_noise  = perturbation*cooling_sequence[n]
                 p_prior     = random_walk_perturbation(p_prior, pert_noise)
@@ -100,13 +99,13 @@ def ifeakf(process_model,
                 oev   = observations_df.loc[pd.to_datetime(date)][[f"oev{i+1}" for i in range(k)]].values
 
 
-                # Update state space
-                #x_post, _ = eakf(x_prior, cum_obs, z, oev)
-                #p_post, _ = eakf(p_prior, cum_obs, z, oev)
+
                 x_prior = x.copy()
                 p_post  = p_prior.copy()
 
-                x_post, p_post, _ = eakf_step(x_prior, p_post, np.squeeze(cum_obs), z, oev)
+                # Update state space
+                x_post, _ = eakf(x_prior, cum_obs, z, oev)
+                p_post, _ = eakf(p_prior, cum_obs, z, oev)
 
                 x_post = inflate_ensembles(x_post, inflation_value=if_settings["inflation"], m=m)
                 p_post = inflate_ensembles(p_post, inflation_value=if_settings["inflation"], m=m)
