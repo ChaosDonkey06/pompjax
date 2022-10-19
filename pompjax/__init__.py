@@ -12,3 +12,4 @@ from .diagnostic_plots import *
 from .inference import *
 from .utils import *
 from .stats import *
+from .ifeakf import *

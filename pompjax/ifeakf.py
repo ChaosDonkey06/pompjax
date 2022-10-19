@@ -9,7 +9,6 @@ from stats import sample_uniform, truncated_normal, sample_uniform2, sample_trun
 from inference import check_param_space, check_state_space, eakf, checkbound_params, inflate_ensembles
 
 
-
 def random_walk_perturbation(param, param_std):
     p, m = param.shape
     return param + np.expand_dims(param_std, -1) * np.random.normal(size=(p, m))
@@ -79,9 +78,9 @@ def ifeakf(process_model,
             p_prior = sample_truncated_normal(pmean, pvar ** (0.5), param_range, m)
             x       = state_space_initial_guess(p_prior)
 
-        t_assim = 0
+        t_assim    = 0
         cum_obs    = np.zeros((k, m))
-        param_time  = np.full((p, m, assimilation_times), np.nan)
+        param_time = np.full((p, m, assimilation_times), np.nan)
 
         for t, date in enumerate(sim_dates):
             x     = process_model(t, x, p_prior)
@@ -97,7 +96,6 @@ def ifeakf(process_model,
                 # Measured observations
                 z     = observations_df.loc[pd.to_datetime(date)][[f"y{i+1}" for i in range(k)]].values
                 oev   = observations_df.loc[pd.to_datetime(date)][[f"oev{i+1}" for i in range(k)]].values
-
 
 
                 x_prior = x.copy()
