@@ -43,5 +43,5 @@ def sample_truncated_normal(mean, sd, xrange, m):
     p       = xrange.shape[0]
     samples = np.full((p, m), np.nan)
     for ip in range(p):
-        samples = samples.at[ip, :].set(get_truncated_normal(mean=mean[ip], sd=sd[ip], low=xrange[ip, 0], upp=xrange[ip, 1]).rvs(m))
+        samples[ip, :] = get_truncated_normal(mean=mean[ip], sd=sd[ip], low=xrange[ip, 0], upp=xrange[ip, 1]).rvs(m)
     return samples
