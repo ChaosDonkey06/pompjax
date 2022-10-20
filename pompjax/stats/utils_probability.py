@@ -33,7 +33,7 @@ def sample_uniform2(xrange, m):
     p       = xrange.shape[0]
     samples = np.full((p, m), np.nan)
     for ip in range(p):
-        samples = samples.at[ip, :].set(np.random.uniform(xrange[ip, 0], xrange[ip, 1], m))
+        samples[ip, :] = np.random.uniform(xrange[ip, 0], xrange[ip, 1], m)
     return samples
 
 def get_truncated_normal(mean=0, sd=1, low=0, upp=10):
