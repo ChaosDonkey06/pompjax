@@ -1,4 +1,5 @@
-import jax.numpy as np
+#import jax.numpy as np
+import numpy as np
 
 def normalize_weights(w):
     """

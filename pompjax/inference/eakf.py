@@ -1,7 +1,7 @@
 
-import jax.numpy as jnp
+#import jax.numpy as jnp
 import numpy as np
-import jax
+#import jax
 
 def check_state_space(x, xrange):
     """

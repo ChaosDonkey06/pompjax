@@ -1,7 +1,7 @@
-import jax.numpy as jnp
+#import jax.numpy as jnp
 import pandas as pd
 import numpy as np
-import jax
+#import jax
 
 from tqdm import tqdm
 
