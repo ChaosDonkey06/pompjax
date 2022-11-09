@@ -6,7 +6,7 @@ import numpy as np
 from tqdm import tqdm
 
 from pompjax.pompjax.stats import sample_uniform2, sample_truncated_normal
-from pompjax.pompjax.inference import check_state_space, eakf, checkbound_params, inflate_ensembles
+from pompjax.pompjax.inference import check_state_space, eakf, checkbound_params, inflate_ensembles, eakf_update
 
 #from stats import sample_uniform, truncated_normal, sample_uniform2, sample_truncated_normal
 #from inference import check_param_space, check_state_space, eakf, checkbound_params, inflate_ensembles
@@ -104,8 +104,11 @@ def ifeakf(process_model,
                 p_post  = p_prior.copy()
 
                 # Update state space
-                x_post, _ = eakf(x_prior, cum_obs, z, oev)
-                p_post, _ = eakf(p_prior, cum_obs, z, oev)
+                #x_post, _ = eakf(x_prior, cum_obs, z, oev)
+                #p_post, _ = eakf(p_prior, cum_obs, z, oev)
+
+                x_post, _ = eakf_update(x_prior, cum_obs, z, oev)
+                p_post, _ = eakf_update(p_prior, cum_obs, z, oev)
 
                 x_post = inflate_ensembles(x_post, inflation_value=if_settings["inflation"], m=m)
                 p_post = inflate_ensembles(p_post, inflation_value=if_settings["inflation"], m=m)

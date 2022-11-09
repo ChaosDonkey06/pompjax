@@ -75,3 +75,17 @@ def eakf(x, y, z, oev):
     ypost = y + dy
 
     return xpost, ypost
+
+
+def eakf_update(x, y, z, oev):
+    p, m   = x.shape
+    k, m   = y.shape
+    k      = z.shape
+
+    xpost  = x.copy()
+    ypost  = y.copy()
+
+    for ki in range(k):
+        xpost, ypost = eakf(xpost, y[ki, :], z[ki], oev[ki])
+
+    return xpost, ypost
