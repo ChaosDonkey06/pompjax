@@ -86,6 +86,6 @@ def eakf_update(x, y, z, oev):
     ypost  = y.copy()
 
     for ki in range(k):
-        xpost, ypost = eakf(xpost, y[ki, :], z[ki], oev[ki])
+        xpost, ypost = eakf(xpost, ypost[ki, :], z[ki], oev[ki])
 
     return xpost, ypost
