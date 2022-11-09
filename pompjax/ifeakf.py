@@ -44,7 +44,8 @@ def ifeakf(process_model,
             model_settings,
             if_settings,
             cooling_sequence = None,
-            perturbation     = None):
+            perturbation     = None,
+            leave_progress   = False):
 
     if cooling_sequence is None:
         cooling_sequence = cooling(if_settings["Nif"], type_cool=if_settings["type_cooling"], cooling_factor=if_settings["shrinkage_factor"])
@@ -69,7 +70,7 @@ def ifeakf(process_model,
     param_post_all = np.full((p, m, assimilation_times, if_settings["Nif"]), np.nan)
     param_mean     = np.full((p, if_settings["Nif"]+1), np.nan)
 
-    for n in tqdm(range(if_settings["Nif"])):
+    for n in tqdm(range(if_settings["Nif"]), leave=leave_progress):
         if n==0:
             p_prior     = sample_uniform2(param_range, m)
             x           = state_space_initial_guess(p_prior)
