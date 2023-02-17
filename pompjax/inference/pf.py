@@ -51,7 +51,7 @@ def resample_particles(particles, x, w, m, p=None):
     else:
         particles_index = np.sort(np.random.choice(np.arange(m), size=m, replace=True, p=w))
 
-    w         = naive_weights()
+    w         = naive_weights(m)
 
     particles = particles[:, particles_index] # Replace particles.
     x_post    = x[:, particles_index]
