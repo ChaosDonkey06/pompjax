@@ -39,23 +39,22 @@ def inflate_ensembles(ens, inflation_value=1.2, m=300):
 def eakf(x, y, z, oev):
     p, m = x.shape
 
-    mu_prior  = y.mean()
-    var_prior = y.var()
+    mu_prior  = np.mean(y, -1, keepdims=True)
+    var_prior = np.var(y, -1, keepdims=True)
 
-    if mu_prior == 0: # degenerate prior.
-        var_post  = 1e-3
-        var_prior = 1e-3
+    idx_degenerate = np.where(mu_prior==0)[0]
+    var_prior[idx_degenerate] =  1e-3
 
     var_post  = var_prior * oev / (var_prior + oev)
     mu_post   = var_post  * (mu_prior/var_prior + z/oev)
-    alpha    = (oev / (oev + var_prior)) ** (0.5)
-    dy       = (mu_post-y) + alpha * (y-mu_prior)
+    alpha     = (oev / (oev + var_prior)) ** (0.5)
+    dy        = (mu_post-y) + alpha * (y-mu_prior)
 
     rr = np.full((p, 1), np.nan)
     for ip in range(p):
         A  = np.cov(x[ip, :], y)
         rr[ip,:] =  A[1, 0] / var_prior
-    dx       = np.dot(rr, dy)
+    dx       = np.dot(rr, np.expand_dims(dy, 0))
 
     xpost = x + dx
     ypost = y + dy
@@ -72,8 +71,6 @@ def eakf_update(x, y, z, oev):
     ypost  = y.copy()
 
     for ki in range(k):
-        print(xpost.shape, ypost[ki, :].shape, z[ki].shape, oev[ki].shape)
-
         xpost, ypost = eakf(xpost, ypost[ki, :], z[ki], oev[ki])
 
     return xpost, ypost

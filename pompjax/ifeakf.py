@@ -6,7 +6,7 @@ import numpy as np
 from tqdm import tqdm
 
 from pompjax.stats import sample_uniform2, sample_truncated_normal
-from pompjax.inference import check_state_space, eakf, checkbound_params, inflate_ensembles, eakf_update
+from pompjax.inference import check_state_space, checkbound_params, inflate_ensembles, eakf_update
 
 #from stats import sample_uniform, truncated_normal, sample_uniform2, sample_truncated_normal
 #from inference import check_param_space, check_state_space, eakf, checkbound_params, inflate_ensembles
@@ -127,7 +127,6 @@ def ifeakf(process_model,
 
                 p_prior = p_post.copy()
                 x       = x_post.copy()
-
 
                 # save posterior parameter
                 param_time[:, :, t_assim] = p_post
