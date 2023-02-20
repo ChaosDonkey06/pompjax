@@ -47,6 +47,11 @@ def ifeakf(process_model,
             perturbation     = None,
             leave_progress   = False):
 
+    if any('adjust_state_space' in key for key in if_settings.keys()):
+        adjust_state_space = if_settings["adjust_state_space"]
+    else:
+        adjust_state_space = True
+
     if cooling_sequence is None:
         cooling_sequence = cooling(if_settings["Nif"], type_cool=if_settings["type_cooling"], cooling_factor=if_settings["shrinkage_factor"])
 
@@ -108,7 +113,8 @@ def ifeakf(process_model,
                 #x_post, _ = eakf(x_prior, cum_obs, z, oev)
                 #p_post, _ = eakf(p_prior, cum_obs, z, oev)
 
-                x_post, _ = eakf_update(x_prior, cum_obs, z, oev)
+                if adjust_state_space:
+                    x_post, _ = eakf_update(x_prior, cum_obs, z, oev)
                 p_post, _ = eakf_update(p_prior, cum_obs, z, oev)
 
                 x_post = inflate_ensembles(x_post, inflation_value=if_settings["inflation"], m=m)

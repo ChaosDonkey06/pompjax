@@ -15,15 +15,14 @@ def compute_effective_sample_size(w):
     return 1/np.sum(w**2)
 
 def importance_sampling(w, z, y, q):
-    """
-    Importance sampling:
+    """ Importance sampling:
             Approximate likelihood P(z|θ) using the importance density q(z|y).
             Where y=g(x;θ) is the observation model used after using the state space model f(x;θ).
             Compute the relative weight of each particle respect the previous PF iteration and normalize the weights.
-    w: Particle weights.
-    z: World observations.
-    y: Modelled observations.
-    q: Proposal distribution.
+        w: Particle weights.
+        z: World observations.
+        y: Modelled observations.
+        q: Proposal distribution.
     """
     loglik  = q(z , y)
 
