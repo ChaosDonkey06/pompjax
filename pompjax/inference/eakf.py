@@ -61,18 +61,15 @@ def eakf(x, y, z, oev):
 
     return xpost, ypost
 
-x1   = p_prior
-y1   = cum_obs
-z1   = z
-oev1 = oev
-
-
-p, m   = x1.shape
-k, m   = y1.shape
-k      = z1.shape[0]
-
-xpost  = x1.copy()
-ypost  = y1.copy()
+# x1   = p_prior
+# y1   = cum_obs
+# z1   = z
+# oev1 = oev
+# p, m   = x1.shape
+# k, m   = y1.shape
+# k      = z1.shape[0]
+# xpost  = x1.copy()
+# ypost  = y1.copy()
 
 def eakf_update(x, y, z, oev):
     p, m   = x.shape
