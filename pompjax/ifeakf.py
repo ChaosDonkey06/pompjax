@@ -116,10 +116,10 @@ def ifeakf(process_model,
 
                 if adjust_state_space:
                     x_post, _ = eakf_update(x_prior, cum_obs, z, oev)
-                p_post, _ = eakf_update(p_prior, cum_obs, z, oev)
+                    x_post    = inflate_ensembles(x_post, inflation_value=if_settings["inflation"], m=m)
 
-                x_post = inflate_ensembles(x_post, inflation_value=if_settings["inflation"], m=m)
-                p_post = inflate_ensembles(p_post, inflation_value=if_settings["inflation"], m=m)
+                p_post, _ = eakf_update(p_prior, cum_obs, z, oev)
+                p_post    = inflate_ensembles(p_post, inflation_value=if_settings["inflation"], m=m)
 
                 # check for a-physicalities in the state and parameter space.
                 x_post = check_state_space(x_post, state_space_range)
