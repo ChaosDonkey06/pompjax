@@ -9,20 +9,6 @@ def check_state_space(x, xrange):
     """
     return np.clip(x, a_min=xrange[0], a_max=xrange[1])
 
-# def check_param_space(key, θ, prange):
-#     key1, key2       = jax.random.split(key, 2)
-# 
-#     loww             = np.expand_dims(prange.at[:, 0].get(), -1)
-#     uppp             = np.expand_dims(prange.at[:, 1].get(), -1)
-# 
-#     teta_correct_low = loww*(1+0.2*jax.random.uniform(key1, θ.shape))
-#     teta_correct_up  = uppp*(1-0.2*jax.random.uniform(key2, θ.shape))
-# 
-#     θ                = np.where(θ < loww, x=teta_correct_low, y=θ)
-#     θ                = np.where(θ > uppp, x=teta_correct_up,  y=θ)
-#     return θ
-# 
-
 def checkbound_params(params, prange):
     p, _ = prange.shape
 
@@ -80,7 +66,7 @@ def eakf(x, y, z, oev):
 def eakf_update(x, y, z, oev):
     p, m   = x.shape
     k, m   = y.shape
-    k      = z.shape
+    k, _   = z.shape
 
     xpost  = x.copy()
     ypost  = y.copy()

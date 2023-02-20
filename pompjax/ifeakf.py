@@ -105,6 +105,7 @@ def ifeakf(process_model,
                 z     = observations_df.loc[pd.to_datetime(date)][[f"y{i+1}" for i in range(k)]].values
                 oev   = observations_df.loc[pd.to_datetime(date)][[f"oev{i+1}" for i in range(k)]].values
 
+                print(z)
 
                 x_prior = x.copy()
                 p_post  = p_prior.copy()
