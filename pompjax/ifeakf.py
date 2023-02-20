@@ -105,20 +105,21 @@ def ifeakf(process_model,
                 z     = observations_df.loc[pd.to_datetime(date)][[f"y{i+1}" for i in range(k)]].values
                 oev   = observations_df.loc[pd.to_datetime(date)][[f"oev{i+1}" for i in range(k)]].values
 
-                x_prior = x.copy()
+                x_post = x.copy()
                 p_post  = p_prior.copy()
+
 
                 # Update state space
                 if adjust_state_space:
-                    x_post, _ = eakf_update(x_prior, cum_obs, z, oev)
+                    x_post, _ = eakf_update(x_post, cum_obs, z, oev)
                     x_post    = inflate_ensembles(x_post, inflation_value=if_settings["inflation"], m=m)
+                    x_post = check_state_space(x_post, state_space_range)
 
                 # Update parameter space
                 p_post, _ = eakf_update(p_prior, cum_obs, z, oev)
                 p_post    = inflate_ensembles(p_post, inflation_value=if_settings["inflation"], m=m)
 
                 # check for a-physicalities in the state and parameter space.
-                x_post = check_state_space(x_post, state_space_range)
                 p_post = checkbound_params(p_post, param_range)
 
                 p_prior = p_post.copy()
