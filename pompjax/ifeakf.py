@@ -108,7 +108,6 @@ def ifeakf(process_model,
                 x_post = x.copy()
                 p_post  = p_prior.copy()
 
-
                 # Update state space
                 if adjust_state_space:
                     x_post, _ = eakf_update(x_post, cum_obs, z, oev)
