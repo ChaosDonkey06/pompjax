@@ -33,9 +33,11 @@ def calibration(samples, observation, observation_index=0, quantiles=[0.25, 0.5,
             df_ward                                     = df_ward.set_index("date").resample(resample).sum()
             df_resume                                   = df_ward.T.quantile(q=[0.5-quant/2, 0.5+quant/2]).T
             df_resume["obs"]                            = np.take(observation, ki, axis=observation_index)
-
             df_resume["calibration"]                    = df_resume.apply(lambda x: x[0.5-quant/2] <= np.double(x.obs) <= x[0.5+quant/2], axis=1)
             cal_df.loc[quant]                           = df_resume["calibration"].sum()/len(df_resume)
+        cal_df["observation"] = ki
+
         calibration_df.append(cal_df)
+
     calibration_df  = pd.concat(calibration_df).reset_index()
     return calibration_df
