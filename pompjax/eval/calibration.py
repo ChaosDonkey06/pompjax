@@ -19,9 +19,10 @@ def calibration(samples, observation, observation_index=0, quantiles=[0.25, 0.5,
 
     for ki in range(k):
 
-        cal_df               = pd.DataFrame(columns=["quantiles", "proportion_inside"])
-        cal_df["quantiles"]  = quantiles
-        cal_df               = cal_df.set_index("quantiles")
+        cal_df                = pd.DataFrame(columns=["quantiles", "proportion_inside", "observation"])
+        cal_df["quantiles"]   = quantiles
+        cal_df["observation"] = ki
+        cal_df                = cal_df.set_index("quantiles")
 
         for quant in cal_df.index.values:
 
